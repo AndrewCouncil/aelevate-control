@@ -35,7 +35,11 @@ const float testTrack[] = {
 #define POT_MAX 1023
 
 #define SERIAL_STOP_CHAR '\n'
-#define SERIAL_TRACK_REQUEST_CHAR 't'
+#define SERIAL_RESISTANCE_DATA_CHAR 'r'
+#define SERIAL_ANGLE_DATA_CHAR 'a'
+#define SERIAL_DIFFICULTY_DATA_CHAR 'd'
+#define SERIAL_TRACK_DATA_CHAR 't'
+
 #define MAX_TRACK_LENGTH 999
 
 Servo restistanceservo;
@@ -127,17 +131,38 @@ void updateHoistPID() {
 }
 
 /*
- * Function: getTrackDataSerial
+ * Function: checkSerial
  * --------------------
- * gets the track data from the serial port.
- * first sends SERIAL_TRACK_REQUEST_CHAR
- * and then reads in track data until
- * SERIAL_STOP_CHAR is received.
- * writes this data to global trackData array.
+ * checks if serial read is available.
+ * if so, performs appropriate serial read
+ * based on prompting character
+ * 
+ * returns: true if serial read was performed, false otherwise
  */
-void getTrackDataSerial() {
-  Serial.write(SERIAL_TRACK_REQUEST_CHAR);
-  Serial.readBytesUntil(SERIAL_STOP_CHAR, trackData, MAX_TRACK_LENGTH);
+bool checkSerial() {
+  if(Serial.available()) {
+    char c = Serial.read();
+
+    // below assumes that the data is sent in the format:
+    // RESISTANCE_DATA_CHAR, resistance value
+    // ANGLE_DATA_CHAR, angle value
+    // DIFFICULTY_DATA_CHAR, resistance value, angle value
+    if (c ==  SERIAL_RESISTANCE_DATA_CHAR || c == SERIAL_DIFFICULTY_DATA_CHAR){
+      // set resistance based on input byte
+      setResistance((unsigned char) Serial.read());
+    }
+    if (c == SERIAL_ANGLE_DATA_CHAR || c == SERIAL_DIFFICULTY_DATA_CHAR){
+      // set desired angle based on input byte
+      hoistSetPoint = (unsigned char) Serial.read();
+    }
+    else if (c == SERIAL_TRACK_DATA_CHAR){
+      // read in track data as char vals from serial to trackData
+      Serial.readBytesUntil(SERIAL_STOP_CHAR, trackData, MAX_TRACK_LENGTH);
+    }
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void setup() {
