@@ -2,6 +2,7 @@
 #include <Servo.h>
 #include <Encoder.h>
 #include <PID_v1.h>
+#include <limits.h>
 
 // import track data from csv file
 // TODO: test that this works even a little bit
@@ -34,7 +35,7 @@ const float testTrack[] = {
 #define POT_MIN 0
 #define POT_MAX 1023
 
-#define SERIAL_STOP_CHAR 's'
+#define SERIAL_RESET_CHAR 's'
 #define SERIAL_RESISTANCE_DATA_CHAR 'r'
 #define SERIAL_ANGLE_DATA_CHAR 'a'
 #define SERIAL_DIFFICULTY_DATA_CHAR 'd'
@@ -44,9 +45,11 @@ const float testTrack[] = {
 
 #define MAX_TRACK_LENGTH 999
 
-Servo restistanceservo;
+Servo restistanceServo;
 
-Encoder biketravel(ENCODER_PIN_A, ENCODER_PIN_B);
+Encoder bikeTravel(ENCODER_PIN_A, ENCODER_PIN_B);
+// set initial old position to unreachable value
+long oldBikePosition = LONG_MAX;
 
 double hoistSetPoint, hoistInput, hoistOutput;
 PID hoistPID(
@@ -71,7 +74,7 @@ char trackData[MAX_TRACK_LENGTH];
  */
 void setResistance(int resistance) {
   int servoval = map(resistance, 0, 255, SERVO_MIN, SERVO_MAX);
-  restistanceservo.write(servoval);
+  restistanceServo.write(servoval);
 }
 
 /*
@@ -145,10 +148,12 @@ bool checkSerial() {
   if(Serial.available() > 0) {
     char c = Serial.read();
     switch(c) {
-      case SERIAL_STOP_CHAR:
+      case SERIAL_RESET_CHAR:
         // stop the bike
         setResistance(255);
         hoistSetPoint = 0;
+        // reset the encoder
+        bikeTravel.write(0);
         break;
 
       // RESISTANCE_DATA_CHAR, resistance value
@@ -173,16 +178,41 @@ bool checkSerial() {
       case SERIAL_TRACK_DATA_CHAR:
         // set trackData to characters read from serial
         // NOTE: probably not using this, seems like a bad idea
-        Serial.readBytesUntil(SERIAL_END_CHAR, trackData, MAX_TRACK_LENGTH);
+        Serial.readBytesUntil(
+          SERIAL_END_CHAR,
+          trackData,
+          MAX_TRACK_LENGTH
+        );
         return true;
 
       default:
         Serial.println("Invalid serial command");
         return false;
     }
-  } else {
-    return false;
+  } 
+  return false;
+}
+
+/*
+ * Function: writeVelSerialOnUpdate
+ * --------------------
+ * checks if the bike position has changed since the last time
+ * this function was called. if so, writes the new position to
+ * serial followed by the time in millis.
+ * 
+ * returns: true if position updated and wrote values to serial,
+ * false otherwise
+ */
+bool writePositionSerialOnUpdate() {
+  long bikePosition = bikeTravel.read();
+
+  if(bikePosition != oldBikePosition) {
+    Serial.write(bikePosition);
+    Serial.write(millis());
+    oldBikePosition = bikePosition;
+    return true;
   }
+  return false;
 }
 
 void setup() {
@@ -194,7 +224,8 @@ void setup() {
   pinMode(HOIST_MOTOR_PIN_A, OUTPUT);
   pinMode(HOIST_MOTOR_PIN_B, OUTPUT);
 
-  restistanceservo.attach(9);  // attaches the servo on pin 9 to the servo object
+  // attaches the servo on pin 9 to the servo object
+  restistanceServo.attach(9);  
 
   // initialize PID input
   hoistInput = getBikeAnglePot();
