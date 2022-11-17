@@ -34,11 +34,13 @@ const float testTrack[] = {
 #define POT_MIN 0
 #define POT_MAX 1023
 
-#define SERIAL_STOP_CHAR '\n'
+#define SERIAL_STOP_CHAR 's'
 #define SERIAL_RESISTANCE_DATA_CHAR 'r'
 #define SERIAL_ANGLE_DATA_CHAR 'a'
 #define SERIAL_DIFFICULTY_DATA_CHAR 'd'
 #define SERIAL_TRACK_DATA_CHAR 't'
+
+#define SERIAL_END_CHAR '\n'
 
 #define MAX_TRACK_LENGTH 999
 
@@ -140,26 +142,44 @@ void updateHoistPID() {
  * returns: true if serial read was performed, false otherwise
  */
 bool checkSerial() {
-  if(Serial.available()) {
+  if(Serial.available() > 0) {
     char c = Serial.read();
+    switch(c) {
+      case SERIAL_STOP_CHAR:
+        // stop the bike
+        setResistance(255);
+        hoistSetPoint = 0;
+        break;
 
-    // below assumes that the data is sent in the format:
-    // RESISTANCE_DATA_CHAR, resistance value
-    // ANGLE_DATA_CHAR, angle value
-    // DIFFICULTY_DATA_CHAR, resistance value, angle value
-    if (c ==  SERIAL_RESISTANCE_DATA_CHAR || c == SERIAL_DIFFICULTY_DATA_CHAR){
-      // set resistance based on input byte
-      setResistance((unsigned char) Serial.read());
+      // RESISTANCE_DATA_CHAR, resistance value
+      case SERIAL_RESISTANCE_DATA_CHAR:
+        // set resistance
+        setResistance(Serial.read());
+        break;
+
+      // ANGLE_DATA_CHAR, angle value
+      case SERIAL_ANGLE_DATA_CHAR:
+        // set angle
+        hoistSetPoint = (unsigned char) Serial.read();
+        break;
+
+      // DIFFICULTY_DATA_CHAR, resistance value, angle value
+      case SERIAL_DIFFICULTY_DATA_CHAR:
+        // set resistance and angle
+        setResistance(Serial.read());
+        hoistSetPoint = (unsigned char) Serial.read();
+        break;
+      
+      case SERIAL_TRACK_DATA_CHAR:
+        // set trackData to characters read from serial
+        // NOTE: probably not using this, seems like a bad idea
+        Serial.readBytesUntil(SERIAL_END_CHAR, trackData, MAX_TRACK_LENGTH);
+        return true;
+
+      default:
+        Serial.println("Invalid serial command");
+        return false;
     }
-    if (c == SERIAL_ANGLE_DATA_CHAR || c == SERIAL_DIFFICULTY_DATA_CHAR){
-      // set desired angle based on input byte
-      hoistSetPoint = (unsigned char) Serial.read();
-    }
-    else if (c == SERIAL_TRACK_DATA_CHAR){
-      // read in track data as char vals from serial to trackData
-      Serial.readBytesUntil(SERIAL_STOP_CHAR, trackData, MAX_TRACK_LENGTH);
-    }
-    return true;
   } else {
     return false;
   }
