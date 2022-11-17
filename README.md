@@ -37,3 +37,4 @@ In this case, it will set the bike angle to the value given, scaled so that 0 is
 (unsigned char) desired angle from 0 to 255
 ```
 In this case, it will set the bike resistance to the first value given, scaled so that 0 is the minimum possible resistance and 255 is the maximum possible resistance. It will also set the bike angle to the second value given, scaled so that 0 is the minimum possible angle and 255 is the maximum possible angle.
+<!-- TODO: document track input if we actually use -->
