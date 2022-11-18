@@ -22,6 +22,18 @@ In this case, it will reset the trainer to full resistance and lowest possible a
 
 ```
 (char) 255
+(char) 'p'
+```
+In this case, it will prompt the Arduino to begin writing position and time to serial.
+
+```
+(char) 255
+(char) 'P'
+```
+In this case, it will prompt the Arduino to stop writing position and time to serial.
+
+```
+(char) 255
 (char) 'r'
 (unsigned char) desired resistance from 0 to 254
 ```

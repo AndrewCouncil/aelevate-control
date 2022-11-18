@@ -36,6 +36,8 @@ const float testTrack[] = {
 #define POT_MAX 1023
 
 #define SERIAL_RESET_CHAR 's'
+#define SERIAL_POSITION_START_CHAR 'p'
+#define SERIAL_POSITION_STOP_CHAR 'P'
 #define SERIAL_RESISTANCE_DATA_CHAR 'r'
 #define SERIAL_ANGLE_DATA_CHAR 'a'
 #define SERIAL_DIFFICULTY_DATA_CHAR 'd'
@@ -47,6 +49,9 @@ const float testTrack[] = {
 Servo restistanceServo;
 
 Encoder bikeTravel(ENCODER_PIN_A, ENCODER_PIN_B);
+
+bool isWritingPosition = false;
+
 // set initial old position to unreachable value
 long oldBikePosition = LONG_MAX;
 
@@ -158,26 +163,38 @@ bool checkSerial() {
         hoistSetPoint = 0;
         // reset the encoder
         bikeTravel.write(0);
-        break;
+        // stop writing position
+        isWritingPosition = false;
+        return true;
+      
+      case SERIAL_POSITION_START_CHAR:
+        // set the bike to start writing position to serial
+        isWritingPosition = true;
+        return true;
+      
+      case SERIAL_POSITION_STOP_CHAR:
+        // set the bike to stop writing position to serial
+        isWritingPosition = false;
+        return true;
 
       // RESISTANCE_DATA_CHAR, resistance value
       case SERIAL_RESISTANCE_DATA_CHAR:
         // set resistance
         setResistance(Serial.read());
-        break;
+        return true;
 
       // ANGLE_DATA_CHAR, angle value
       case SERIAL_ANGLE_DATA_CHAR:
         // set angle
         hoistSetPoint = (unsigned char) Serial.read();
-        break;
+        return true;
 
       // DIFFICULTY_DATA_CHAR, resistance value, angle value
       case SERIAL_DIFFICULTY_DATA_CHAR:
         // set resistance and angle
         setResistance(Serial.read());
         hoistSetPoint = (unsigned char) Serial.read();
-        break;
+        return true;
       
       case SERIAL_TRACK_DATA_CHAR:
         // set trackData to characters read from serial
