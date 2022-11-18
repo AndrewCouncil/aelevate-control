@@ -29,7 +29,7 @@ const float testTrack[] = {
 // TODO: adjust range to actual range of possible values
 #define SERVO_MIN 30
 #define SERVO_MAX 155
-// note: this is A4
+
 #define POT_PIN A4
 // TODO: adjust range to actual range of possible values
 #define POT_MIN 0
@@ -40,7 +40,6 @@ const float testTrack[] = {
 #define SERIAL_ANGLE_DATA_CHAR 'a'
 #define SERIAL_DIFFICULTY_DATA_CHAR 'd'
 #define SERIAL_TRACK_DATA_CHAR 't'
-
 #define SERIAL_END_CHAR '\n'
 
 #define MAX_TRACK_LENGTH 999
@@ -68,12 +67,12 @@ char trackData[MAX_TRACK_LENGTH];
  * Function:  setResistance 
  * --------------------
  * sets the resistance of the bike by rotating the servo, with
- * 0 being the lowest and 255 being the highest resistance.
+ * 0 being the lowest and 254 being the highest resistance.
  * 
- * resistance: the resistance to set the bike to between 0 and 255
+ * resistance: the resistance to set the bike to between 0 and 254
  */
 void setResistance(int resistance) {
-  int servoval = map(resistance, 0, 255, SERVO_MIN, SERVO_MAX);
+  int servoval = map(resistance, 0, 254, SERVO_MIN, SERVO_MAX);
   restistanceServo.write(servoval);
 }
 
@@ -83,13 +82,13 @@ void setResistance(int resistance) {
  * gets the angle of the bike from the potentiometer.
  * 
  * returns: the value representing position of the range
- * the bike is at, with 0 being the lowest and 255 being the highest.
+ * the bike is at, with 0 being the lowest and 254 being the highest.
  */
 char getBikeAnglePot() {
   // get the angle from the potentiometer on port 4
   int potval = analogRead(POT_PIN);
-  // map the value to a value between 0 and 255
-  char angle = map(potval, POT_MIN, POT_MAX, 0, 255);
+  // map the value to a value between 0 and 254
+  char angle = map(potval, POT_MIN, POT_MAX, 0, 254);
   return angle;
 }
 
@@ -99,7 +98,7 @@ char getBikeAnglePot() {
  * gets the angle of the bike from the IMU (alternative).
  * 
  * returns: the value representing position of the range
- * the bike is at, with 0 being the lowest and 255 being the highest.
+ * the bike is at, with 0 being the lowest and 254 being the highest.
  */
 long getBikeAngleIMU() {
   return 0;
@@ -146,11 +145,16 @@ void updateHoistPID() {
  */
 bool checkSerial() {
   if(Serial.available() > 0) {
+    // checks if magic number
+    char is255 = Serial.read();
+    if(is255 != 255) return false;
+
+    // read in command character
     char c = Serial.read();
     switch(c) {
       case SERIAL_RESET_CHAR:
         // stop the bike
-        setResistance(255);
+        setResistance(254);
         hoistSetPoint = 0;
         // reset the encoder
         bikeTravel.write(0);
@@ -238,6 +242,6 @@ void setup() {
 void loop() {
   setResistance(0);
   delay(2000);
-  setResistance(255);
+  setResistance(254);
   delay(2000);
 }

@@ -15,26 +15,30 @@ Every cycle, the Arduino will output over serial in the following format:
 Every cycle, the Arduino will check for data input over serial of one of the following formats:
 
 ```
+(char) 255
 (char) 's'
 ```
 In this case, it will reset the trainer to full resistance and lowest possible angle.
 
 ```
+(char) 255
 (char) 'r'
-(unsigned char) desired resistance from 0 to 255
+(unsigned char) desired resistance from 0 to 254
 ```
 In this case, it will set the bike resistance to the value given, scaled so that 0 is the minimum possible resistance and 255 is the maximum possible resistance.
 
 ```
+(char) 255
 (char) 'a'
-(unsigned char) desired angle from 0 to 255
+(unsigned char) desired angle from 0 to 254
 ```
 In this case, it will set the bike angle to the value given, scaled so that 0 is the minimum possible angle and 255 is the maximum possible angle.
 
 ```
+(char) 255
 (char) 'd'
-(unsigned char) desired resistance from 0 to 255
-(unsigned char) desired angle from 0 to 255
+(unsigned char) desired resistance from 0 to 254
+(unsigned char) desired angle from 0 to 254
 ```
 In this case, it will set the bike resistance to the first value given, scaled so that 0 is the minimum possible resistance and 255 is the maximum possible resistance. It will also set the bike angle to the second value given, scaled so that 0 is the minimum possible angle and 255 is the maximum possible angle.
 <!-- TODO: document track input if we actually use -->
