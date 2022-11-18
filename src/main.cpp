@@ -256,6 +256,17 @@ void setup() {
   hoistPID.SetMode(AUTOMATIC);
 }
 
+void controlLoop() {
+  // update PID controller
+  updateHoistPID();
+  // check if serial read is available
+  checkSerial();
+  // check if bike position has changed and write to serial
+  if(isWritingPosition) {
+    writePositionSerialOnUpdate();
+  }
+}
+
 void loop() {
   setResistance(0);
   delay(2000);
