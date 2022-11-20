@@ -280,6 +280,57 @@ void controlLoop() {
   // }
 }
 
+void testMotorBasic() {
+  // test basic functionality of the motor
+  setHoistVel(255);
+  delay(1000);
+  setHoistVel(-255);
+  delay(1000);
+}
+
+void testMotorAnalog() {
+  // test analogWrite functionality of the motor
+  for(int i = -255; i <= 255; i++) {
+    setHoistVel(i);
+    delay(10);
+  }
+  for(int i = 255; i >= -255; i--) {
+    setHoistVel(i);
+    delay(10);
+  }
+}
+
+void testAngle() {
+  // test angle functionality
+  for(int i = 0; i <= 254; i++) {
+    setHoistVel(i);
+    delay(10);
+  }
+  for(int i = 254; i >= 0; i--) {
+    setHoistVel(i);
+    delay(10);
+  }
+}
+
+void testPID() {
+  // test PID functionality
+  for(int i = 0; i <= 254; i++) {
+    hoistSetPoint = i;
+    updateHoistPID();
+    delay(10);
+  }
+  for(int i = 254; i >= 0; i--) {
+    hoistSetPoint = i;
+    updateHoistPID();
+    delay(10);
+  }
+}
+
+void testDistance() {
+  isWritingPosition = true;
+  delay(999999999999);
+}
+
 void loop() {
   setResistance(0);
   delay(2000);
