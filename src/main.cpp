@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <Servo.h>
-#include <Encoder.h>
 #include <PID_v1.h>
 #include <limits.h>
 
@@ -13,8 +12,7 @@ const float testTrack[] = {
   #include "testdata.csv"
 };
 
-#define ENCODER_PIN_A 2
-#define ENCODER_PIN_B 3
+#define HEF_PIN 2
 
 // TODO: switch if wrong direction
 // NOTE: must be PWM enabled pins
@@ -48,12 +46,9 @@ const float testTrack[] = {
 
 Servo restistanceServo;
 
-Encoder bikeTravel(ENCODER_PIN_A, ENCODER_PIN_B);
-
 bool isWritingPosition = false;
 
-// set initial old position to unreachable value
-long oldBikePosition = LONG_MAX;
+unsigned long currentBikePosition = 0;
 
 double hoistSetPoint, hoistInput, hoistOutput;
 PID hoistPID(
@@ -140,6 +135,22 @@ void updateHoistPID() {
 }
 
 /*
+ * Function: resetBike
+ * --------------------
+ * resets the bike to the lowest position.
+ * stops writing position data to serial.
+ */
+void resetBike() {
+  // stop the bike
+  setResistance(254);
+  hoistSetPoint = 0;
+  // reset the position
+  currentBikePosition = 0;
+  // stop writing position
+  isWritingPosition = false;
+}
+
+/*
  * Function: checkSerial
  * --------------------
  * checks if serial read is available.
@@ -158,13 +169,7 @@ bool checkSerial() {
     char c = Serial.read();
     switch(c) {
       case SERIAL_RESET_CHAR:
-        // stop the bike
-        setResistance(254);
-        hoistSetPoint = 0;
-        // reset the encoder
-        bikeTravel.write(0);
-        // stop writing position
-        isWritingPosition = false;
+        resetBike();
         return true;
       
       case SERIAL_POSITION_START_CHAR:
@@ -215,32 +220,41 @@ bool checkSerial() {
 }
 
 /*
- * Function: writeVelSerialOnUpdate
+ * Function: writePositionSerial
  * --------------------
- * checks if the bike position has changed since the last time
- * this function was called. if so, writes the new position to
- * serial followed by the time in millis.
+ * writes bike position to serial followed
+ * by the time in millis.
  * 
  * returns: true if position updated and wrote values to serial,
  * false otherwise
  */
-bool writePositionSerialOnUpdate() {
-  long bikePosition = bikeTravel.read();
+bool writePositionSerial() {
+  Serial.write(currentBikePosition);
+  Serial.write(millis());
+}
 
-  if(bikePosition != oldBikePosition) {
-    Serial.write(bikePosition);
-    Serial.write(millis());
-    oldBikePosition = bikePosition;
-    return true;
+/*
+ * Function: hallEffISR
+ * --------------------
+ * runs when the hall effect sensor gets a positive edge.
+ * increments the current bike position and prints position
+ * to serial if isWritingPosition is true.
+ */
+void hallEffISR() {
+  currentBikePosition++;
+  if(isWritingPosition) {
+    writePositionSerial();
   }
-  return false;
 }
 
 void setup() {
   Serial.begin(9600);
+
   // set encoder pins to input
-  pinMode(ENCODER_PIN_A, INPUT);
-  pinMode(ENCODER_PIN_B, INPUT);
+  pinMode(HEF_PIN, INPUT);
+  // increment position on rising edge interrupt
+  attachInterrupt(digitalPinToInterrupt(HEF_PIN), hallEffISR, RISING);
+
   // set hoist motor pins to output
   pinMode(HOIST_MOTOR_PIN_A, OUTPUT);
   pinMode(HOIST_MOTOR_PIN_B, OUTPUT);
@@ -261,10 +275,9 @@ void controlLoop() {
   updateHoistPID();
   // check if serial read is available
   checkSerial();
-  // check if bike position has changed and write to serial
-  if(isWritingPosition) {
-    writePositionSerialOnUpdate();
-  }
+  // if(isWritingPosition) {
+  //   writePositionSerial();
+  // }
 }
 
 void loop() {
