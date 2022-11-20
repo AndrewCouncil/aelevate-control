@@ -7,7 +7,7 @@ ProjectIO Arduino code to control the Aelevate Bike Trainer for Duke Product Des
 Every cycle, the Arduino will output over serial in the following format:
 
 ```
-(long) current encoder position
+(unsigned long) current number of rotations (counted from hall effect sensor)
 (unsigned long) current time, output from millis()
 ```
 
