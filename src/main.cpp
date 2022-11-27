@@ -267,7 +267,7 @@ bool checkSerial() {
  * returns: true if position updated and wrote values to serial,
  * false otherwise
  */
-bool writePositionSerial() {
+void writePositionSerial() {
   Serial.write(currentBikePosition);
   Serial.write(millis());
 }
@@ -372,7 +372,7 @@ void testPID() {
 
 void testDistance() {
   isWritingPosition = true;
-  delay(999999999999);
+  delay(9999999);
 }
 
 void loop() {
