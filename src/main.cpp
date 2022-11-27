@@ -21,8 +21,7 @@ const float testTrack[] = {
 #define HOIST_MOTOR_PIN_A 5
 #define HOIST_MOTOR_PIN_B 6
 
-#define UP_LIMIT_PIN 11
-#define DOWN_LIMIT_PIN 12
+#define LIMIT_PIN 3
 
 #define HOIST_WAVE_COUNT 10
 #define HOIST_WAVE_PERIOD HOIST_WAVE_COUNT*LOOP_DURATION // ms
@@ -290,10 +289,15 @@ void hallEffISR() {
 void setup() {
   Serial.begin(9600);
 
-  // set encoder pins to input
+  // set hall effect sensor pin to input
   pinMode(HEF_PIN, INPUT);
   // increment position on rising edge interrupt
   attachInterrupt(digitalPinToInterrupt(HEF_PIN), hallEffISR, RISING);
+
+  // set limit switch pin to input
+  pinMode(LIMIT_PIN, INPUT);
+  // reset bike on rising edge interrupt
+  attachInterrupt(digitalPinToInterrupt(LIMIT_PIN), resetBike, RISING);
 
   // set hoist motor pins to output
   pinMode(HOIST_MOTOR_PIN_A, OUTPUT);
