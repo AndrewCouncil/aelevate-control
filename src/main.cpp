@@ -12,12 +12,20 @@ const float testTrack[] = {
   #include "testdata.csv"
 };
 
+#define LOOP_DURATION 30 // ms
+
 #define HEF_PIN 2
 
 // TODO: switch if wrong direction
 // NOTE: must be PWM enabled pins
 #define HOIST_MOTOR_PIN_A 5
 #define HOIST_MOTOR_PIN_B 6
+
+#define UP_LIMIT_PIN 11
+#define DOWN_LIMIT_PIN 12
+
+#define HOIST_WAVE_COUNT 10
+#define HOIST_WAVE_PERIOD HOIST_WAVE_COUNT*LOOP_DURATION // ms
 
 #define HOIST_KP 2
 #define HOIST_KI 5
@@ -45,6 +53,8 @@ const float testTrack[] = {
 #define MAX_TRACK_LENGTH 999
 
 Servo restistanceServo;
+
+int hoistLoops = 0;
 
 bool isWritingPosition = false;
 
@@ -105,14 +115,14 @@ long getBikeAngleIMU() {
 }
 
 /*
- * Function: setHoistVel
+ * Function: setHoistVelPWM
  * --------------------
  * sets the speed of the hoist motor using PWM switching on the
  * SSRs connected to the motor.
  * 
  * velocity: the speed to set the hoist motor to between -255 and 255
  */
-void setHoistVel(short velocity) {
+void setHoistVelPWM(short velocity) {
   if(velocity >= 0){
     analogWrite(HOIST_MOTOR_PIN_A, abs(velocity));
     analogWrite(HOIST_MOTOR_PIN_B, 0);
@@ -120,6 +130,36 @@ void setHoistVel(short velocity) {
     analogWrite(HOIST_MOTOR_PIN_A, 0);
     analogWrite(HOIST_MOTOR_PIN_B, abs(velocity));
   }
+}
+
+/*
+ * Function: setHoistVelTime
+ * --------------------
+ * sets the speed of the hoist motor using delay-based switching on the
+ * SSRs connected to the motor.
+ * 
+ * velocity: the speed to set the hoist motor to between -255 and 255
+ */
+void setHoistVelTime(short velocity){
+  // count up the number of loops
+  hoistLoops++;
+  // if the number of loops is equal to loop count, set back to 0 
+  if (hoistLoops >= HOIST_WAVE_COUNT) hoistLoops = 0;
+  // set number of loops to run on based on proportion out of 255
+  int highWaveCount = ceil((HOIST_WAVE_COUNT * ((float)abs(velocity)) / 255));
+  // if the loop count is less than high count, set motor on in direction given
+  digitalWrite(
+    HOIST_MOTOR_PIN_A,
+    (hoistLoops < highWaveCount) && (velocity > 0)
+  );
+  digitalWrite(
+    HOIST_MOTOR_PIN_B,
+    (hoistLoops < highWaveCount) && (velocity < 0)
+  );
+}
+
+void setHoistVel(short velocity) {
+  setHoistVelTime(velocity);
 }
 
 /*
