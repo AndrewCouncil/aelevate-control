@@ -20,7 +20,6 @@ const float testTrack[] = {
 // NOTE: must be PWM enabled pins
 #define HOIST_MOTOR_PIN_A 5
 #define HOIST_MOTOR_PIN_B 6
-#define HOIST_MOTOR_PIN_C 10
 
 #define LIMIT_PIN 3
 
@@ -130,7 +129,6 @@ void setHoistVelPWM(short velocity) {
     analogWrite(HOIST_MOTOR_PIN_A, 0);
     analogWrite(HOIST_MOTOR_PIN_B, abs(velocity));
   }
-  analogWrite(HOIST_MOTOR_PIN_C, abs(velocity));
 }
 
 /*
@@ -149,11 +147,14 @@ void setHoistVelTime(short velocity){
   // set number of loops to run on based on proportion out of 255
   int highWaveCount = ceil((HOIST_WAVE_COUNT * ((float)abs(velocity)) / 255));
   // if the loop count is less than high count, set motor on in direction given
-  bool upMove = (hoistLoops < highWaveCount) && (velocity > 0);
-  bool downMove = (hoistLoops < highWaveCount) && (velocity < 0);
-  digitalWrite(HOIST_MOTOR_PIN_A, upMove);
-  digitalWrite(HOIST_MOTOR_PIN_B, downMove);
-  digitalWrite(HOIST_MOTOR_PIN_C, upMove || downMove);
+  digitalWrite(
+    HOIST_MOTOR_PIN_A,
+    (hoistLoops < highWaveCount) && (velocity > 0)
+  );
+  digitalWrite(
+    HOIST_MOTOR_PIN_B,
+    (hoistLoops < highWaveCount) && (velocity < 0)
+  );
 }
 
 void setHoistVel(short velocity) {
@@ -304,7 +305,6 @@ void setup() {
   // set hoist motor pins to output
   pinMode(HOIST_MOTOR_PIN_A, OUTPUT);
   pinMode(HOIST_MOTOR_PIN_B, OUTPUT);
-  pinMode(HOIST_MOTOR_PIN_C, OUTPUT);
 
   // attaches the servo on pin 9 to the servo object
   restistanceServo.attach(9);  
