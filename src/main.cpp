@@ -289,8 +289,11 @@ void hallEffISR() {
 void setup() {
   Serial.begin(9600);
 
+  // set builtin LED to output
+  pinMode(LED_BUILTIN, OUTPUT);
+
   // set hall effect sensor pin to input
-  pinMode(HEF_PIN, INPUT);
+  pinMode(HEF_PIN, INPUT_PULLUP);
   // increment position on rising edge interrupt
   attachInterrupt(digitalPinToInterrupt(HEF_PIN), hallEffISR, RISING);
 
@@ -373,6 +376,14 @@ void testPID() {
 void testDistance() {
   isWritingPosition = true;
   delay(9999999);
+}
+
+void testHEF() {
+  // set builtin LED to state of hall effect sensor
+  while(true) {
+    digitalWrite(LED_BUILTIN, digitalRead(HEF_PIN));
+    delay(LOOP_DURATION);
+  }
 }
 
 void loop() {
