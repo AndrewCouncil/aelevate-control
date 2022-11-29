@@ -12,7 +12,7 @@ const float testTrack[] = {
   #include "testdata.csv"
 };
 
-#define LOOP_DURATION 30 // ms
+#define LOOP_DURATION 100 // ms
 
 #define HEF_PIN 2
 
@@ -37,8 +37,8 @@ const float testTrack[] = {
 
 #define POT_PIN A4
 // TODO: adjust range to actual range of possible values
-#define POT_MAX 600
-#define POT_MIN (POT_MAX - 88)
+#define POT_MAX 595
+#define POT_MIN 560
 #define POT_MID ((POT_MAX + POT_MIN) / 2)
 
 #define SERIAL_RESET_CHAR 's'
@@ -71,7 +71,7 @@ PID hoistPID(
   DIRECT
 );
 
-char trackData[MAX_TRACK_LENGTH];
+unsigned char trackData[MAX_TRACK_LENGTH];
 
 /*
  * Function:  setResistance 
@@ -94,11 +94,11 @@ void setResistance(int resistance) {
  * returns: the value representing position of the range
  * the bike is at, with 0 being the lowest and 254 being the highest.
  */
-char getBikeAnglePot() {
+long getBikeAnglePot() {
   // get the angle from the potentiometer on port 4
   int potval = analogRead(POT_PIN);
   // map the value to a value between 0 and 254
-  char angle = map(potval, POT_MIN, POT_MAX, 0, 254);
+  long angle = map(potval, POT_MIN, POT_MAX, 0, 254);
   return angle;
 }
 
@@ -162,13 +162,60 @@ void setHoistVel(short velocity) {
   setHoistVelTime(velocity);
 }
 
+bool halfSpeedState = false;
+void setHoistVelSimple(short velocity) {
+  switch (velocity) {
+    case 0:
+      digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
+      digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
+      break;
+    case -2:
+      digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
+      digitalWrite(HOIST_MOTOR_PIN_B, LOW);
+      break;
+    case 2:
+      digitalWrite(HOIST_MOTOR_PIN_A, LOW);
+      digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
+      break;
+    case -1:
+      digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
+      digitalWrite(HOIST_MOTOR_PIN_B, halfSpeedState);
+      break;
+    case 1:
+      digitalWrite(HOIST_MOTOR_PIN_A, halfSpeedState);
+      digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
+      break;
+  }
+  hoistLoops++;
+  if(hoistLoops >= HOIST_WAVE_COUNT){
+    hoistLoops = 0;
+    halfSpeedState = !halfSpeedState;
+  }
+}
+
+void badControl(long input) {
+  // Serial.println(input);
+  // Serial.print("      ");
+  // Serial.println((unsigned int)hoistSetPoint);
+  if(input <  hoistSetPoint - 20){
+    Serial.println("too low");
+    setHoistVelSimple(2);
+  } else if(input > hoistSetPoint + 20){
+    Serial.println("too high");
+    setHoistVelSimple(-2);
+  } else {
+    setHoistVelSimple(0);
+  }
+  return;
+}
+
 /*
  * Function: updateHoistPID
  * --------------------
  * updates the PID controller for the hoist motor.
  * sets speed of hoist based on PID controller output.
  */
-void updateHoistPID() {
+void updateHoistControl() {
   hoistInput = getBikeAnglePot();
   // if hoistInput is within +- 10 of the setpoint, set to 0
   hoistPID.Compute();
@@ -325,7 +372,7 @@ void setup() {
   // set hall effect sensor pin to input
   pinMode(HEF_PIN, INPUT_PULLUP);
   // increment position on rising edge interrupt
-  attachInterrupt(digitalPinToInterrupt(HEF_PIN), hallEffISR, FALLING);
+  // attachInterrupt(digitalPinToInterrupt(HEF_PIN), hallEffISR, FALLING);
 
   // set limit switch pin to input
   pinMode(LIMIT_PIN, INPUT);
@@ -342,17 +389,17 @@ void setup() {
   // attaches the servo on pin 9 to the servo object
   restistanceServo.attach(9);  
 
-  // initialize PID input
-  hoistInput = getBikeAnglePot();
-  hoistSetPoint = 255/2;
-  // sets PID range to same as possible analog outputs
-  hoistPID.SetOutputLimits(-255, 255);
-  hoistPID.SetMode(AUTOMATIC);
+  // // initialize PID input
+  // hoistInput = getBikeAnglePot();
+  // hoistSetPoint = 255/2;
+  // // sets PID range to same as possible analog outputs
+  // hoistPID.SetOutputLimits(-255, 255);
+  // hoistPID.SetMode(AUTOMATIC);
 }
 
 void controlLoop() {
   // update PID controller
-  updateHoistPID();
+  updateHoistControl();
   // check if serial read is available
   checkSerial();
   // if(isWritingPosition) {
@@ -362,10 +409,12 @@ void controlLoop() {
 
 void testMotorBasic() {
   // test basic functionality of the motor
-  setHoistVel(255);
-  delay(1000);
-  setHoistVel(-255);
-  delay(1000);
+  // setHoistVel(255);
+  // delay(1000);
+  // setHoistVel(-255);
+  // delay(1000);
+  setHoistVelSimple(-1);
+  delay(LOOP_DURATION);
 }
 
 void testMotorAnalog() {
@@ -396,14 +445,20 @@ void testPID() {
   // test PID functionality
   for(int i = 0; i <= 254; i++) {
     hoistSetPoint = i;
-    updateHoistPID();
+    updateHoistControl();
     delay(10);
   }
   for(int i = 254; i >= 0; i--) {
     hoistSetPoint = i;
-    updateHoistPID();
+    updateHoistControl();
     delay(10);
   }
+}
+
+void testSetAngle() {
+  hoistSetPoint = 200;
+  badControl(getBikeAnglePot());
+  delay(LOOP_DURATION);
 }
 
 void testDistance() {
@@ -421,19 +476,19 @@ void testHEF() {
 
 void testPot() {
   // print the pot value to serial
-  Serial.println((int)getBikeAnglePot());
+  Serial.println(analogRead(POT_PIN));
   delay(LOOP_DURATION);
 }
 
 void simpleHoist() {
   // simple hoist test
-  // digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
-  // digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
-  // delay(1500);
-  // // DOWN
-  // digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
-  // digitalWrite(HOIST_MOTOR_PIN_B, LOW);
-  // delay(300);
+  digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
+  digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
+  delay(1500);
+  // DOWN
+  digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
+  digitalWrite(HOIST_MOTOR_PIN_B, LOW);
+  delay(300);
   digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
   digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
   delay(1000);
@@ -455,11 +510,13 @@ void loop() {
   // delay(2000);
   // testDistance();
   // testHEF();
-  testPot();
+  // testPot();
   // simpleHoist();
+  // testMotorBasic();
+  // testSetAngle();
   // blink the buildin led
   // digitalWrite(LED_BUILTIN, HIGH);
   // delay(1000);
   // digitalWrite(LED_BUILTIN, LOW);
-  // delay(1000);
+  delay(1000);
 }
