@@ -297,7 +297,7 @@ void hallEffISR() {
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(9600, SERIAL_8E1);
 
   // set builtin LED to output
   pinMode(LED_BUILTIN, OUTPUT);
