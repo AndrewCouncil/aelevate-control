@@ -386,9 +386,26 @@ void testHEF() {
   }
 }
 
+void simpleHoist() {
+  // simple hoist test
+  digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
+  digitalWrite(HOIST_MOTOR_PIN_B, LOW);
+  delay(1000);
+  digitalWrite(HOIST_MOTOR_PIN_A, LOW);
+  digitalWrite(HOIST_MOTOR_PIN_B, LOW);
+  delay(1000);
+  digitalWrite(HOIST_MOTOR_PIN_A, LOW);
+  digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
+  delay(1000);
+  digitalWrite(HOIST_MOTOR_PIN_A, LOW);
+  digitalWrite(HOIST_MOTOR_PIN_B, LOW);
+  delay(1000);
+}
+
 void loop() {
-  setResistance(0);
-  delay(2000);
-  setResistance(254);
-  delay(2000);
+  // setResistance(0);
+  // delay(2000);
+  // setResistance(254);
+  // delay(2000);
+  simpleHoist();
 }
