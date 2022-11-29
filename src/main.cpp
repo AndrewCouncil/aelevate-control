@@ -291,13 +291,15 @@ void writePositionSerial() {
  */
 void hallEffISR() {
   currentBikePosition++;
-  if(isWritingPosition) {
-    writePositionSerial();
-  }
+  // if(isWritingPosition) {
+  //   writePositionSerial();
+  // }
+  Serial.println("Hall effect sensor triggered");
 }
 
 void setup() {
-  Serial.begin(9600, SERIAL_8E1);
+  // Serial.begin(9600, SERIAL_8E1);
+  Serial.begin(9600);
 
   // set builtin LED to output
   pinMode(LED_BUILTIN, OUTPUT);
@@ -305,7 +307,7 @@ void setup() {
   // set hall effect sensor pin to input
   pinMode(HEF_PIN, INPUT_PULLUP);
   // increment position on rising edge interrupt
-  attachInterrupt(digitalPinToInterrupt(HEF_PIN), hallEffISR, RISING);
+  attachInterrupt(digitalPinToInterrupt(HEF_PIN), hallEffISR, FALLING);
 
   // set limit switch pin to input
   pinMode(LIMIT_PIN, INPUT);
@@ -417,6 +419,6 @@ void loop() {
   // delay(2000);
   // setResistance(254);
   // delay(2000);
-  checkSerial();
-  delay(LOOP_DURATION);
+  testDistance();
+  // testHEF();
 }
