@@ -388,9 +388,6 @@ void testHEF() {
 
 void simpleHoist() {
   // simple hoist test
-  digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
-  digitalWrite(HOIST_MOTOR_PIN_B, LOW);
-  delay(1000);
   digitalWrite(HOIST_MOTOR_PIN_A, LOW);
   digitalWrite(HOIST_MOTOR_PIN_B, LOW);
   delay(1000);
@@ -398,6 +395,9 @@ void simpleHoist() {
   digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
   delay(1000);
   digitalWrite(HOIST_MOTOR_PIN_A, LOW);
+  digitalWrite(HOIST_MOTOR_PIN_B, LOW);
+  delay(1000);
+  digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
   digitalWrite(HOIST_MOTOR_PIN_B, LOW);
   delay(1000);
 }
