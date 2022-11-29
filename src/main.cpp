@@ -201,10 +201,17 @@ void resetBike() {
 bool checkSerial() {
   if(Serial.available() > 0) {
     // checks if magic number
-    char is255 = Serial.read();
-    if(is255 != 255) return false;
+    unsigned char is255 = Serial.read();
+    if(is255 != 255) {
+      // set builtin LED on for 1 second
+      digitalWrite(LED_BUILTIN, HIGH);
+      delay(500);
+      digitalWrite(LED_BUILTIN, LOW);
+      return false;
+    }
 
     // read in command character
+    while(Serial.available() == 0);
     char c = Serial.read();
     switch(c) {
       case SERIAL_RESET_CHAR:
@@ -224,6 +231,7 @@ bool checkSerial() {
       // RESISTANCE_DATA_CHAR, resistance value
       case SERIAL_RESISTANCE_DATA_CHAR:
         // set resistance
+        while(Serial.available() == 0);
         setResistance(Serial.read());
         return true;
 
@@ -236,6 +244,7 @@ bool checkSerial() {
       // DIFFICULTY_DATA_CHAR, resistance value, angle value
       case SERIAL_DIFFICULTY_DATA_CHAR:
         // set resistance and angle
+        while(Serial.available() == 0);
         setResistance(Serial.read());
         hoistSetPoint = (unsigned char) Serial.read();
         return true;
@@ -243,6 +252,7 @@ bool checkSerial() {
       case SERIAL_TRACK_DATA_CHAR:
         // set trackData to characters read from serial
         // NOTE: probably not using this, seems like a bad idea
+        while(Serial.available() == 0);
         Serial.readBytesUntil(
           SERIAL_END_CHAR,
           trackData,
@@ -407,5 +417,6 @@ void loop() {
   // delay(2000);
   // setResistance(254);
   // delay(2000);
-  simpleHoist();
+  checkSerial();
+  delay(LOOP_DURATION);
 }
