@@ -37,8 +37,9 @@ const float testTrack[] = {
 
 #define POT_PIN A4
 // TODO: adjust range to actual range of possible values
-#define POT_MIN 345
-#define POT_MAX 300
+#define POT_MAX 600
+#define POT_MIN (POT_MAX - 88)
+#define POT_MID ((POT_MAX + POT_MIN) / 2)
 
 #define SERIAL_RESET_CHAR 's'
 #define SERIAL_POSITION_START_CHAR 'p'
@@ -169,8 +170,14 @@ void setHoistVel(short velocity) {
  */
 void updateHoistPID() {
   hoistInput = getBikeAnglePot();
+  // if hoistInput is within +- 10 of the setpoint, set to 0
   hoistPID.Compute();
-  setHoistVel(hoistOutput);
+  if (abs(hoistInput - hoistSetPoint) <= 10) {
+    setHoistVel(0);
+  } else {
+    hoistPID.Compute();
+    setHoistVel(hoistOutput);
+  }
 }
 
 /*
@@ -323,18 +330,21 @@ void setup() {
   // set limit switch pin to input
   pinMode(LIMIT_PIN, INPUT);
   // reset bike on rising edge interrupt
-  attachInterrupt(digitalPinToInterrupt(LIMIT_PIN), limitISR, RISING);
+  // attachInterrupt(digitalPinToInterrupt(LIMIT_PIN), limitISR, RISING);
 
   // set hoist motor pins to output
   pinMode(HOIST_MOTOR_PIN_A, OUTPUT);
   pinMode(HOIST_MOTOR_PIN_B, OUTPUT);
+  // turn motor off
+  digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
+  digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
 
   // attaches the servo on pin 9 to the servo object
   restistanceServo.attach(9);  
 
   // initialize PID input
   hoistInput = getBikeAnglePot();
-  hoistSetPoint = 0;
+  hoistSetPoint = 255/2;
   // sets PID range to same as possible analog outputs
   hoistPID.SetOutputLimits(-255, 255);
   hoistPID.SetMode(AUTOMATIC);
@@ -411,19 +421,19 @@ void testHEF() {
 
 void testPot() {
   // print the pot value to serial
-  Serial.println(analogRead(POT_PIN));
+  Serial.println((int)getBikeAnglePot());
   delay(LOOP_DURATION);
 }
 
 void simpleHoist() {
   // simple hoist test
-  digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
-  digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
-  delay(1000);
-  // DOWN
-  digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
-  digitalWrite(HOIST_MOTOR_PIN_B, LOW);
-  delay(1000);
+  // digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
+  // digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
+  // delay(1500);
+  // // DOWN
+  // digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
+  // digitalWrite(HOIST_MOTOR_PIN_B, LOW);
+  // delay(300);
   digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
   digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
   delay(1000);
@@ -431,6 +441,11 @@ void simpleHoist() {
   digitalWrite(HOIST_MOTOR_PIN_A, LOW);
   digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
   delay(1000);
+  // flash the builtin led
+  // digitalWrite(LED_BUILTIN, HIGH);
+  // delay(500);
+  // digitalWrite(LED_BUILTIN, LOW);
+  // delay(500);
 }
 
 void loop() {
@@ -440,6 +455,11 @@ void loop() {
   // delay(2000);
   // testDistance();
   // testHEF();
-  // testPot();
-  simpleHoist();
+  testPot();
+  // simpleHoist();
+  // blink the buildin led
+  // digitalWrite(LED_BUILTIN, HIGH);
+  // delay(1000);
+  // digitalWrite(LED_BUILTIN, LOW);
+  // delay(1000);
 }
