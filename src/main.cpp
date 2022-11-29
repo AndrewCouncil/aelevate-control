@@ -297,6 +297,17 @@ void hallEffISR() {
   Serial.println(currentBikePosition);
 }
 
+/*
+ * Function: limitISR
+ * --------------------
+ * runs when the limit switch gets a positive edge.
+ * prints limit reached to serial.
+ */
+void limitISR() {
+  // print that limit has been reached
+  Serial.println("Limit reached");
+}
+
 void setup() {
   // Serial.begin(9600, SERIAL_8E1);
   Serial.begin(9600);
@@ -312,7 +323,7 @@ void setup() {
   // set limit switch pin to input
   pinMode(LIMIT_PIN, INPUT);
   // reset bike on rising edge interrupt
-  attachInterrupt(digitalPinToInterrupt(LIMIT_PIN), resetBike, RISING);
+  attachInterrupt(digitalPinToInterrupt(LIMIT_PIN), limitISR, RISING);
 
   // set hoist motor pins to output
   pinMode(HOIST_MOTOR_PIN_A, OUTPUT);
