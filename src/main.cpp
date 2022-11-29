@@ -37,8 +37,8 @@ const float testTrack[] = {
 
 #define POT_PIN A4
 // TODO: adjust range to actual range of possible values
-#define POT_MIN 0
-#define POT_MAX 1023
+#define POT_MIN 345
+#define POT_MAX 300
 
 #define SERIAL_RESET_CHAR 's'
 #define SERIAL_POSITION_START_CHAR 'p'
@@ -294,7 +294,7 @@ void hallEffISR() {
   // if(isWritingPosition) {
   //   writePositionSerial();
   // }
-  Serial.println("Hall effect sensor triggered");
+  Serial.println(currentBikePosition);
 }
 
 void setup() {
@@ -398,6 +398,12 @@ void testHEF() {
   }
 }
 
+void testPot() {
+  // print the pot value to serial
+  Serial.println(analogRead(POT_PIN));
+  delay(LOOP_DURATION);
+}
+
 void simpleHoist() {
   // simple hoist test
   digitalWrite(HOIST_MOTOR_PIN_A, LOW);
@@ -419,6 +425,7 @@ void loop() {
   // delay(2000);
   // setResistance(254);
   // delay(2000);
-  testDistance();
+  // testDistance();
   // testHEF();
+  testPot();
 }
