@@ -37,8 +37,8 @@ const float testTrack[] = {
 
 #define POT_PIN A4
 // TODO: adjust range to actual range of possible values
-#define POT_MAX 595
-#define POT_MIN 560
+#define POT_MIN 130
+#define POT_MAX 170
 #define POT_MID ((POT_MAX + POT_MIN) / 2)
 
 #define SERIAL_RESET_CHAR 's'
@@ -97,6 +97,7 @@ void setResistance(int resistance) {
 long getBikeAnglePot() {
   // get the angle from the potentiometer on port 4
   int potval = analogRead(POT_PIN);
+  Serial.println(potval);
   // map the value to a value between 0 and 254
   long angle = map(potval, POT_MIN, POT_MAX, 0, 254);
   return angle;
@@ -372,7 +373,7 @@ void setup() {
   // set hall effect sensor pin to input
   pinMode(HEF_PIN, INPUT_PULLUP);
   // increment position on rising edge interrupt
-  // attachInterrupt(digitalPinToInterrupt(HEF_PIN), hallEffISR, FALLING);
+  attachInterrupt(digitalPinToInterrupt(HEF_PIN), hallEffISR, FALLING);
 
   // set limit switch pin to input
   pinMode(LIMIT_PIN, INPUT);
@@ -456,7 +457,7 @@ void testPID() {
 }
 
 void testSetAngle() {
-  hoistSetPoint = 200;
+  hoistSetPoint = 250;
   badControl(getBikeAnglePot());
   delay(LOOP_DURATION);
 }
@@ -484,23 +485,43 @@ void simpleHoist() {
   // simple hoist test
   digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
   digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
-  delay(1500);
+  delay(1000);
   // DOWN
   digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
   digitalWrite(HOIST_MOTOR_PIN_B, LOW);
-  delay(300);
+  delay(1000);
   digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
   digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
   delay(1000);
   // UP
   digitalWrite(HOIST_MOTOR_PIN_A, LOW);
   digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
-  delay(1000);
+  delay(300);
   // flash the builtin led
   // digitalWrite(LED_BUILTIN, HIGH);
   // delay(500);
   // digitalWrite(LED_BUILTIN, LOW);
   // delay(500);
+}
+
+void stepDown() {
+  digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
+  digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
+  delay(1000);
+  // DOWN
+  digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
+  digitalWrite(HOIST_MOTOR_PIN_B, LOW);
+  delay(250);
+}
+
+void stepUp() {
+  digitalWrite(HOIST_MOTOR_PIN_A, HIGH);
+  digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
+  delay(1000);
+  // UP
+  digitalWrite(HOIST_MOTOR_PIN_A, LOW);
+  digitalWrite(HOIST_MOTOR_PIN_B, HIGH);
+  delay(250);
 }
 
 void loop() {
@@ -510,13 +531,15 @@ void loop() {
   // delay(2000);
   // testDistance();
   // testHEF();
-  // testPot();
   // simpleHoist();
   // testMotorBasic();
   // testSetAngle();
+  // stepDown();
+  // stepUp();
+  testPot();
   // blink the buildin led
   // digitalWrite(LED_BUILTIN, HIGH);
   // delay(1000);
   // digitalWrite(LED_BUILTIN, LOW);
-  delay(1000);
+  // delay(1000);
 }
