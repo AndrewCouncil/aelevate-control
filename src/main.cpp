@@ -205,7 +205,8 @@ bool checkSerial() {
       // ANGLE_DATA_CHAR, angle value
       case SERIAL_ANGLE_DATA_CHAR:
         // set angle
-        hoistSetPoint = (unsigned char) Serial.read();
+        while(Serial.available() == 0);
+        hoistSetPoint = (double)((unsigned char) Serial.read());
         return true;
 
       default:
@@ -381,6 +382,7 @@ void loop() {
   // stepDown();
   // stepUp();
   // testPot();
+  testDistance();
   // blink();
   delay(1000);
 }
