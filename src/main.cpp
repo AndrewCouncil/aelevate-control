@@ -346,10 +346,10 @@ void writePositionSerial() {
  */
 void hallEffISR() {
   currentBikePosition++;
-  // if(isWritingPosition) {
-  //   writePositionSerial();
-  // }
-  Serial.println(currentBikePosition);
+  if(isWritingPosition) {
+    writePositionSerial();
+  }
+  // Serial.println(currentBikePosition);
 }
 
 /*
@@ -364,8 +364,8 @@ void limitISR() {
 }
 
 void setup() {
-  // Serial.begin(9600, SERIAL_8E1);
-  Serial.begin(9600);
+  Serial.begin(9600, SERIAL_8E1);
+  // Serial.begin(9600);
 
   // set builtin LED to output
   pinMode(LED_BUILTIN, OUTPUT);
@@ -536,10 +536,10 @@ void loop() {
   // testSetAngle();
   // stepDown();
   // stepUp();
-  testPot();
+  // testPot();
   // blink the buildin led
   // digitalWrite(LED_BUILTIN, HIGH);
   // delay(1000);
   // digitalWrite(LED_BUILTIN, LOW);
-  // delay(1000);
+  delay(1000);
 }
